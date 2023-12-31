@@ -2,6 +2,11 @@
 
 from rpython.jit.backend.riscv.instructions import all_instructions
 from rpython.jit.backend.riscv import rounding_modes
+from rpython.jit.backend.riscv.instruction_util import (
+    check_imm_arg, check_simm13_arg, check_simm21_arg, check_uimm20_arg)
+
+
+_DEBUG_IMM = True
 
 
 def _gen_r_type_instr_assembler(opcode, funct3, funct7):
@@ -16,6 +21,8 @@ def _gen_r_type_instr_assembler(opcode, funct3, funct7):
 def _gen_i_type_instr_assembler(opcode, funct3):
     bits = (funct3 << 12) | opcode
     def assemble(self, rd, rs1, imm):
+        if _DEBUG_IMM:
+            assert check_imm_arg(imm), 'imm overflow'
         rd = int(rd) << 7
         rs1 = int(rs1) << 15
         imm = (imm & 0xfff) << 20
@@ -25,6 +32,8 @@ def _gen_i_type_instr_assembler(opcode, funct3):
 def _gen_s_type_instr_assembler(opcode, funct3):
     bits = (funct3 << 12) | opcode
     def assemble(self, rs2, rs1, imm):
+        if _DEBUG_IMM:
+            assert check_imm_arg(imm), 'imm overflow'
         rs1 = int(rs1) << 15
         rs2 = int(rs2) << 20
         imm5 = (imm & 0x01f) << 7
@@ -35,6 +44,8 @@ def _gen_s_type_instr_assembler(opcode, funct3):
 def _gen_b_type_instr_assembler(opcode, funct3):
     bits = (funct3 << 12) | opcode
     def assemble(self, rs1, rs2, imm):
+        if _DEBUG_IMM:
+            assert check_simm13_arg(imm), 'imm overflow'
         rs1 = int(rs1) << 15
         rs2 = int(rs2) << 20
         imm5 = ((imm & 0x01e) | ((imm >> 11) & 1)) << 7
@@ -44,6 +55,8 @@ def _gen_b_type_instr_assembler(opcode, funct3):
 
 def _gen_u_type_instr_assembler(opcode):
     def assemble(self, rd, imm):
+        if _DEBUG_IMM:
+            assert check_uimm20_arg(imm), 'uimm20 overflow'
         rd = int(rd) << 7
         imm20 = (imm & 0xfffff) << 12
         self.write32(imm20 | rd | opcode)
@@ -51,6 +64,8 @@ def _gen_u_type_instr_assembler(opcode):
 
 def _gen_j_type_instr_assembler(opcode):
     def assemble(self, rd, imm):
+        if _DEBUG_IMM:
+            assert check_simm21_arg(imm), 'simm21 overflow'
         rd = int(rd) << 7
         imm20 = (((imm & 0x100000) << 11) |
                  ((imm & 0x0007fe) << 20) |
@@ -62,6 +77,8 @@ def _gen_j_type_instr_assembler(opcode):
 def _gen_i_shamt5_type_instr_assembler(opcode, funct3, funct7):
     bits = (funct7 << 25) | (funct3 << 12) | opcode
     def assemble(self, rd, rs1, shamt):
+        if _DEBUG_IMM:
+            assert shamt >= 0 and shamt < 32, 'shamt overflow'
         rd = int(rd) << 7
         rs1 = int(rs1) << 15
         shamt = (shamt & 0x1f) << 20
@@ -71,6 +88,8 @@ def _gen_i_shamt5_type_instr_assembler(opcode, funct3, funct7):
 def _gen_i_shamt6_type_instr_assembler(opcode, funct3, funct6):
     bits = (funct6 << 26) | (funct3 << 12) | opcode
     def assemble(self, rd, rs1, shamt):
+        if _DEBUG_IMM:
+            assert shamt >= 0 and shamt < 64, 'shamt overflow'
         rd = int(rd) << 7
         rs1 = int(rs1) << 15
         shamt = (shamt & 0x3f) << 20
