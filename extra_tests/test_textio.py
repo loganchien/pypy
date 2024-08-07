@@ -1,4 +1,4 @@
-from hypothesis import given, strategies as st
+from hypothesis import given, strategies as st, settings, HealthCheck
 
 from io import BytesIO, TextIOWrapper
 import os
@@ -27,6 +27,7 @@ def st_readline_universal(
         ''.join(line + ending for line, ending in zip(lines, endings)),
         limits)
 
+@settings(suppress_health_check=[HealthCheck.too_slow])
 @given(data=st_readline_universal(),
        mode=st.sampled_from(['\r', '\n', '\r\n', '', None]))
 def test_readline(data, mode):

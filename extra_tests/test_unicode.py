@@ -1,7 +1,7 @@
 import sys
 import pytest
 from hypothesis import strategies as st
-from hypothesis import given, settings, example
+from hypothesis import given, settings, example, HealthCheck
 
 from unicodedata import normalize
 
@@ -40,18 +40,21 @@ def test_find(u, prefix, suffix):
     assert 0 <= s.find(u) <= len(prefix)
     assert s.find(u, len(prefix), len(s) - len(suffix)) == len(prefix)
 
+@settings(suppress_health_check=[HealthCheck.too_slow])
 @given(st.text(), st.text(), st.text())
 def test_index(u, prefix, suffix):
     s = prefix + u + suffix
     assert 0 <= s.index(u) <= len(prefix)
     assert s.index(u, len(prefix), len(s) - len(suffix)) == len(prefix)
 
+@settings(suppress_health_check=[HealthCheck.too_slow])
 @given(st.text(), st.text(), st.text())
 def test_rfind(u, prefix, suffix):
     s = prefix + u + suffix
     assert s.rfind(u) >= len(prefix)
     assert s.rfind(u, len(prefix), len(s) - len(suffix)) == len(prefix)
 
+@settings(suppress_health_check=[HealthCheck.too_slow])
 @given(st.text(), st.text(), st.text())
 def test_rindex(u, prefix, suffix):
     s = prefix + u + suffix

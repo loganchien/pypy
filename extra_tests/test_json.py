@@ -1,6 +1,6 @@
 import pytest
 import json
-from hypothesis import given, strategies
+from hypothesis import given, strategies, settings, HealthCheck
 
 def is_(x, y):
     return type(x) is type(y) and x == y
@@ -28,6 +28,7 @@ jsondata = strategies.recursive(
     lambda children: strategies.lists(children) |
         strategies.dictionaries(strategies.text(), children))
 
+@settings(suppress_health_check=[HealthCheck.too_slow])
 @given(jsondata)
 def test_roundtrip(d):
     assert json.loads(json.dumps(d)) == d
